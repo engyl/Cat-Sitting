@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sugarplum — Cat Sitting Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#fdf6ec;--warm:#f5e6d0;--sand:#e8d5b7;
+  --rust:#c0622f;--rust-dk:#9a4a20;--rust-lt:#e8845a;
+  --ink:#2c1f14;--muted:#8c7460;
+  --success:#3a7d55;--error:#b83232;--white:#fffdf9;
+  --blue:#2563a8;--blue-lt:rgba(37,99,168,.10);
+  --sh:0 4px 24px rgba(44,31,20,.10);--sh-lg:0 12px 48px rgba(44,31,20,.16);
+}
+body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(192,98,47,.10) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 80% at 90% 100%,rgba(192,98,47,.07) 0%,transparent 55%);pointer-events:none}
+
+/* HEADER */
+header{position:relative;z-index:1;text-align:center;padding:44px 24px 20px}
+.paw-icon{font-size:2.4rem;display:block;animation:sway 3s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+header h1{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,3rem);font-weight:700;color:var(--rust);letter-spacing:-.02em;line-height:1;margin-top:6px}
+header h1 em{font-style:italic;color:var(--ink)}
+header p{margin-top:7px;font-size:.82rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;font-weight:500}
+
+/* CARD */
+.card{position:relative;z-index:1;background:var(--white);border-radius:22px;box-shadow:var(--sh-lg);max-width:780px;margin:0 auto 20px;padding:34px 42px;border:1px solid rgba(192,98,47,.10);animation:rise .5s cubic-bezier(.22,.68,0,1.2) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.section-label{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;color:var(--rust);letter-spacing:.02em;margin-bottom:13px;padding-bottom:7px;border-bottom:1.5px solid var(--sand);display:flex;align-items:center;gap:7px}
+.form-section{margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px 15px}
+.grid-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+label.fl{font-size:.72rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+input,select,textarea{width:100%;background:var(--cream);border:1.5px solid var(--sand);border-radius:10px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s,background .2s;appearance:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--rust);background:var(--white);box-shadow:0 0 0 3px rgba(192,98,47,.12)}
+input::placeholder,textarea::placeholder{color:#cbbba8}
+input[readonly]{background:var(--warm);color:var(--muted);cursor:default}
+.select-wrap{position:relative}
+.select-wrap::after{content:'▾';position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:.82rem}
+.select-wrap select{padding-right:34px;cursor:pointer}
+.activities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.ac{display:flex;align-items:center;gap:8px;background:var(--cream);border:1.5px solid var(--sand);border-radius:40px;padding:7px 12px;cursor:pointer;transition:background .18s,border-color .18s,transform .15s;user-select:none}
+.ac:hover{border-color:var(--rust-lt);background:var(--warm)}
+.ac input[type=checkbox]{width:14px;height:14px;border-radius:4px;padding:0;flex-shrink:0;cursor:pointer;accent-color:var(--rust)}
+.ac span{font-size:.84rem;font-weight:500;color:var(--ink)}
+.ac:has(input:checked){background:rgba(192,98,47,.11);border-color:var(--rust);transform:scale(1.02)}
+textarea{resize:vertical;min-height:76px}
+#dur-badge{display:none;background:rgba(192,98,47,.10);border:1px solid rgba(192,98,47,.25);color:var(--rust-dk);font-size:.79rem;font-weight:500;padding:4px 12px;border-radius:20px;margin-top:6px;width:fit-content}
+
+/* VISIT ORDER CARD */
+#vo-card{animation-delay:.05s}
+.vo-create-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.vo-create-row .field{flex:1;min-width:180px}
+.btn-create-vo{white-space:nowrap;background:var(--rust);color:var(--white);border:none;border-radius:10px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .18s,transform .15s;box-shadow:0 3px 12px rgba(192,98,47,.28)}
+.btn-create-vo:hover{background:var(--rust-dk);transform:translateY(-1px)}
+
+.vo-select-row{margin-top:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.vo-select-row .field{flex:1;min-width:200px}
+.vo-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:18px}
+.btn-vo{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:8px;padding:8px 15px;font-size:.8rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .18s,transform .14s}
+.btn-complete{background:rgba(58,125,85,.15);color:var(--success)}
+.btn-complete:hover{background:rgba(58,125,85,.28)}
+.btn-complete.done{background:var(--success);color:#fff}
+.btn-delete-vo{background:rgba(184,50,50,.12);color:var(--error)}
+.btn-delete-vo:hover{background:rgba(184,50,50,.24)}
+
+/* STATUS BADGE */
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;padding:3px 10px;border-radius:20px;margin-left:6px}
+.status-active{background:rgba(37,99,168,.12);color:var(--blue)}
+.status-done{background:rgba(58,125,85,.15);color:var(--success)}
+
+/* VO LIST TABLE */
+.vo-list-wrap{margin-top:14px;overflow-x:auto}
+.vo-list-wrap table{width:100%;border-collapse:collapse;font-size:.82rem}
+.vo-list-wrap thead{background:rgba(192,98,47,.07)}
+.vo-list-wrap thead th{padding:8px 12px;text-align:left;font-weight:600;font-size:.71rem;text-transform:uppercase;letter-spacing:.04em;color:var(--rust-dk);white-space:nowrap}
+.vo-list-wrap tbody tr{border-bottom:1px solid var(--warm)}
+.vo-list-wrap tbody tr:last-child{border-bottom:none}
+.vo-list-wrap tbody td{padding:9px 12px;vertical-align:middle}
+
+/* SUBMIT */
+.submit-btn{width:100%;background:var(--rust);color:var(--white);border:none;border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:.96rem;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:background .2s,transform .15s,box-shadow .2s;box-shadow:0 4px 16px rgba(192,98,47,.28)}
+.submit-btn:hover{background:var(--rust-dk);transform:translateY(-2px);box-shadow:0 6px 20px rgba(192,98,47,.36)}
+.submit-btn:active{transform:translateY(0)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* RECORDS CARD */
+.records-card{position:relative;z-index:1;background:var(--white);border-radius:22px;box-shadow:var(--sh-lg);max-width:780px;margin:0 auto 80px;border:1px solid rgba(192,98,47,.10);overflow:hidden;animation:rise .65s .1s cubic-bezier(.22,.68,0,1.2) both}
+.rec-head{display:flex;align-items:center;justify-content:space-between;padding:18px 32px 14px;border-bottom:1.5px solid var(--warm);flex-wrap:wrap;gap:10px}
+.rec-head h2{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--ink);display:flex;align-items:center;gap:8px}
+.cnt{background:var(--rust);color:var(--white);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;font-family:'DM Sans',sans-serif}
+.act-row{display:flex;gap:8px;flex-wrap:wrap}
+.bsm{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:8px;padding:8px 14px;font-size:.8rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .18s,transform .15s}
+.b-csv{background:var(--success);color:#fff}
+.b-csv:hover{background:#2f6644;transform:translateY(-1px)}
+.b-csv-all{background:var(--blue);color:#fff}
+.b-csv-all:hover{background:#1a4f8a;transform:translateY(-1px)}
+.b-clr{background:var(--warm);color:var(--muted)}
+.b-clr:hover{background:var(--sand);color:var(--ink)}
+
+/* VO FILTER TABS */
+.vo-tabs{display:flex;gap:0;flex-wrap:wrap;padding:0 32px;border-bottom:1.5px solid var(--warm);overflow-x:auto}
+.vo-tab{padding:10px 16px;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:color .18s,border-color .18s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif}
+.vo-tab:hover{color:var(--ink)}
+.vo-tab.active{color:var(--rust);border-bottom-color:var(--rust)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead{background:rgba(192,98,47,.07)}
+thead th{padding:9px 13px;text-align:left;font-weight:600;letter-spacing:.04em;font-size:.71rem;text-transform:uppercase;color:var(--rust-dk);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--warm);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--cream)}
+tbody td{padding:10px 13px;color:var(--ink);vertical-align:top}
+.no-rec{text-align:center;color:var(--muted);padding:36px;font-style:italic;font-size:.88rem}
+.badge{display:inline-block;background:rgba(192,98,47,.11);color:var(--rust-dk);border-radius:20px;padding:2px 7px;font-size:.71rem;font-weight:500;margin:2px 2px 2px 0}
+.cn{font-weight:600}.ca{color:var(--muted);font-size:.76rem;margin-top:1px}
+
+/* TOAST */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--white);padding:11px 24px;border-radius:40px;font-size:.86rem;font-weight:500;box-shadow:var(--sh-lg);transition:transform .4s cubic-bezier(.22,.68,0,1.2),opacity .35s;opacity:0;z-index:999;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#toast.success{background:var(--success)}
+#toast.error{background:var(--error)}
+
+/* EMPTY STATE */
+.empty-vo{text-align:center;padding:24px 16px;color:var(--muted);font-size:.88rem;font-style:italic}
+
+@media(max-width:600px){
+  .card{padding:22px 15px;margin:0 11px 18px}
+  .grid-2{grid-template-columns:1fr}
+  .activities-grid{grid-template-columns:1fr 1fr}
+  .records-card{margin:0 11px 60px}
+  .rec-head{padding:14px 15px 12px}
+  .vo-tabs{padding:0 12px}
+  thead th,tbody td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="paw-icon">🐾</span>
+  <h1>Sugar<em>plum</em></h1>
+  <p>Cat Sitting Activity Tracker</p>
+</header>
+
+<div class="card" id="vo-card">
+  <div class="section-label">📋 Visit Orders</div>
+
+  <div class="form-section" style="margin-bottom:18px">
+    <div class="vo-create-row">
+      <div class="field">
+        <label class="fl">New Visit Order Name</label>
+        <input type="text" id="vo-name-input" placeholder="e.g. Whiskers @ Tanjong Pagar"/>
+      </div>
+      <div class="field">
+        <label class="fl">Customer Address</label>
+        <input type="text" id="vo-addr-input" placeholder="e.g. 12 Orchard Rd, Singapore 238801"/>
+      </div>
+      <button class="btn-create-vo" id="btn-create-vo">+ Create</button>
+    </div>
+  </div>
+
+  <div class="vo-select-row">
+    <div class="field" style="flex:1">
+      <label class="fl">Select Visit Order</label>
+      <div class="select-wrap">
+        <select id="vo-select">
+          <option value="">— Select a Visit Order —</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="vo-addr-display" style="display:none;margin-top:12px">
+    <label class="fl">Address on file</label>
+    <input type="text" id="vo-addr-readonly" readonly/>
+  </div>
+
+  <div class="vo-actions" id="vo-actions" style="display:none">
+    <button class="btn-vo btn-complete" id="btn-complete-vo">&#10003; Mark Completed</button>
+    <button class="btn-vo btn-delete-vo" id="btn-delete-vo">&#128465; Delete Visit Order</button>
+  </div>
+
+  <div style="margin-top:20px">
+    <div class="section-label" style="font-size:.88rem;margin-bottom:10px">All Visit Orders</div>
+    <div class="vo-list-wrap">
+      <table id="vo-table">
+        <thead>
+          <tr><th>#</th><th>Visit Order</th><th>Address</th><th>Logs</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="vo-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="log-card">
+  <div id="no-vo-msg" style="text-align:center;padding:16px 0;color:var(--muted);font-style:italic;font-size:.92rem">
+    Please create or select a Visit Order above to log a visit.
+  </div>
+  <div id="log-form-inner" style="display:none">
+    <form id="log-form">
+
+      <div class="form-section">
+        <div class="section-label">🏠 Customer Details</div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="fl">Visit Order</label>
+            <input type="text" id="vo-display" readonly tabindex="-1"/>
+          </div>
+          <div class="field">
+            <label class="fl">Address</label>
+            <input type="text" id="address-display" readonly tabindex="-1"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">🕐 Visit Timing</div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="fl">Arrival Date &amp; Time *</label>
+            <input type="datetime-local" id="arrival"/>
+          </div>
+          <div class="field">
+            <label class="fl">Departure Date &amp; Time *</label>
+            <input type="datetime-local" id="departure"/>
+          </div>
+        </div>
+        <div id="dur-badge">Duration: <span id="dur-text"></span></div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">🐱 Activities Performed</div>
+        <div class="field" style="margin-bottom:12px">
+          <label class="fl">Visit Type</label>
+          <div class="select-wrap">
+            <select id="visit-type">
+              <option value="">— Select visit type —</option>
+              <option>Drop-in (30 min)</option>
+              <option>Extended visit (1 hr)</option>
+              <option>Half-day stay</option>
+              <option>Overnight stay</option>
+              <option>Full-day stay</option>
+            </select>
+          </div>
+        </div>
+        <div class="activities-grid">
+          <label class="ac"><input type="checkbox" value="Feeding"/><span>Feeding</span></label>
+          <label class="ac"><input type="checkbox" value="Fresh Water"/><span>Fresh Water</span></label>
+          <label class="ac"><input type="checkbox" value="Litter Clean"/><span>Litter Clean</span></label>
+          <label class="ac"><input type="checkbox" value="Playtime"/><span>Playtime</span></label>
+          <label class="ac"><input type="checkbox" value="Grooming"/><span>Grooming</span></label>
+          <label class="ac"><input type="checkbox" value="Cuddle Time"/><span>Cuddle Time</span></label>
+          <label class="ac"><input type="checkbox" value="Medication"/><span>Medication</span></label>
+          <label class="ac"><input type="checkbox" value="Health Check"/><span>Health Check</span></label>
+          <label class="ac"><input type="checkbox" value="Exercise"/><span>Exercise</span></label>
+          <label class="ac"><input type="checkbox" value="Mail / Plants"/><span>Mail / Plants</span></label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">📝 Notes &amp; Observations</div>
+        <div class="field">
+          <label class="fl">Additional notes</label>
+          <textarea id="notes" placeholder="Mood, appetite, any concerns, special instructions followed..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">🐾 &nbsp;Save Visit Log</button>
+    </form>
+  </div>
+</div>
+
+<div class="records-card">
+  <div class="rec-head">
+    <h2>📋 Visit Logs <span class="cnt" id="cnt">0</span></h2>
+    <div class="act-row">
+      <button class="bsm b-csv" id="btn-csv">&#8659; CSV (this order)</button>
+      <button class="bsm b-csv-all" id="btn-csv-all">&#8659; CSV (all orders)</button>
+      <button class="bsm b-clr" id="btn-clr">&#128465; Clear Logs</button>
+    </div>
+  </div>
+  <div class="vo-tabs" id="vo-tabs"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Visit Order</th><th>Address</th><th>Arrival</th>
+          <th>Departure</th><th>Duration</th><th>Visit Type</th><th>Activities</th><th>Notes</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  GOOGLE SHEETS CONFIGURATION
+// ═══════════════════════════════════════════
+// Paste your copied Web App deployment URL here!
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9BzTMcK3yclf6ylZ_bpZJtrGkptSWsW69EIaU2W5LoaW3leNR4CipAqCjSCYQB5NYIw/exec";
+
+// ═══════════════════════════════════════════
+//  STORAGE KEYS
+// ═══════════════════════════════════════════
+var VO_KEY  = 'sugarplum_visitorders';
+var LOG_KEY = 'sugarplum_logs';
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+var visitOrders = [];   
+var logs        = [];   
+var activeVoId  = null; 
+var activeTab   = 'all';
+
+// ═══════════════════════════════════════════
+//  PERSISTENCE
+// ═══════════════════════════════════════════
+function loadData() {
+  try { visitOrders = JSON.parse(localStorage.getItem(VO_KEY))  || []; } catch(e){ visitOrders=[]; }
+  try { logs        = JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch(e){ logs=[]; }
+}
+function saveData() {
+  try {
+    localStorage.setItem(VO_KEY,  JSON.stringify(visitOrders));
+    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+  } catch(e){ showToast('Storage error — data may not persist','error'); }
+}
+
+// ═══════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function toISO(d) {
+  var p = function(n){ return String(n).padStart(2,'0'); };
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+
+function fmtTS(d) {
+  return d.toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'})+
+         ' '+d.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type||'');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function(){ t.className=''; }, 3200);
+}
+
+// ═══════════════════════════════════════════
+//  VISIT ORDER RENDERING
+// ═══════════════════════════════════════════
+function renderVOSelect() {
+  var sel = document.getElementById('vo-select');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— Select a Visit Order —</option>';
+  visitOrders.forEach(function(vo) {
+    var opt = document.createElement('option');
+    opt.value = vo.id;
+    opt.textContent = vo.name + (vo.status==='completed' ? ' [Completed]' : '');
+    if (vo.status === 'completed') opt.style.color = '#8c7460';
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
+function renderVOTable() {
+  var tbody = document.getElementById('vo-tbody');
+  if (!visitOrders.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-rec">No Visit Orders yet — create one above.</td></tr>';
+    return;
+  }
+  var html = '';
+  visitOrders.forEach(function(vo, i) {
+    var logCount = logs.filter(function(l){ return l.voId === vo.id; }).length;
+    var pill = vo.status === 'completed'
+      ? '<span class="status-pill status-done">&#10003; Completed</span>'
+      : '<span class="status-pill status-active">Active</span>';
+    html += '<tr>';
+    html += '<td style="color:var(--muted);font-size:.77rem">'+(i+1)+'</td>';
+    html += '<td style="font-weight:600">'+esc(vo.name)+'</td>';
+    html += '<td style="font-size:.8rem;color:var(--muted)">'+esc(vo.address)+'</td>';
+    html += '<td style="text-align:center"><span class="badge">'+logCount+'</span></td>';
+    html += '<td>'+pill+'</td>';
+    html += '<td>';
+    if (vo.status === 'active') {
+      html += '<button data-void="'+vo.id+'" class="btn-vo btn-complete tbl-complete" style="padding:5px 10px;font-size:.74rem">&#10003; Complete</button> ';
+    }
+    html += '<button data-void="'+vo.id+'" class="btn-vo btn-delete-vo tbl-delete" style="padding:5px 10px;font-size:.74rem">&#128465; Delete</button>';
+    html += '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+
+  document.querySelectorAll('.tbl-complete').forEach(function(btn){
+    btn.addEventListener('click', function(){ completeVO(this.getAttribute('data-void')); });
+  });
+  document.querySelectorAll('.tbl-delete').forEach(function(btn){
+    btn.addEventListener('click', function(){ deleteVO(this.getAttribute('data-void')); });
+  });
+}
+
+function renderVOTabs() {
+  var tabs = document.getElementById('vo-tabs');
+  var html = '<button class="vo-tab'+(activeTab==='all'?' active':'')+'" data-tab="all">All</button>';
+  visitOrders.forEach(function(vo){
+    var cnt = logs.filter(function(l){ return l.voId===vo.id; }).length;
+    html += '<button class="vo-tab'+(activeTab===vo.id?' active':'')+'" data-tab="'+vo.id+'">'+
+            esc(vo.name)+' <span class="cnt" style="font-size:.68rem;padding:1px 6px">'+cnt+'</span></button>';
+  });
+  tabs.innerHTML = html;
+  tabs.querySelectorAll('.vo-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      activeTab = this.getAttribute('data-tab');
+      renderVOTabs();
+      renderLogsTable();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════
+//  VISIT ORDER ACTIONS
+// ═══════════════════════════════════════════
+document.getElementById('btn-create-vo').addEventListener('click', function(){
+  var name = document.getElementById('vo-name-input').value.trim();
+  var addr = document.getElementById('vo-addr-input').value.trim();
+  if (!name) { showToast('Please enter a Visit Order name','error'); return; }
+  if (!addr) { showToast('Please enter the customer address','error'); return; }
+  var vo = { id: uid(), name: name, address: addr, status: 'active', createdAt: new Date().toISOString() };
+  visitOrders.push(vo);
+  saveData();
+  document.getElementById('vo-name-input').value = '';
+  document.getElementById('vo-addr-input').value = '';
+  renderVOSelect();
+  renderVOTable();
+  renderVOTabs();
+  document.getElementById('vo-select').value = vo.id;
+  selectVO(vo.id);
+  showToast('Visit Order created: '+name,'success');
+});
+
+document.getElementById('vo-select').addEventListener('change', function(){
+  selectVO(this.value);
+});
+
+function selectVO(id) {
+  activeVoId = id || null;
+  var vo = visitOrders.find(function(v){ return v.id === id; });
+  var addrDisplay = document.getElementById('vo-addr-display');
+  var voActions   = document.getElementById('vo-actions');
+  var logInner    = document.getElementById('log-form-inner');
+  var noVoMsg     = document.getElementById('no-vo-msg');
+
+  if (!vo) {
+    addrDisplay.style.display = 'none';
+    voActions.style.display   = 'none';
+    logInner.style.display    = 'none';
+    noVoMsg.style.display     = 'block';
+    return;
+  }
+
+  document.getElementById('vo-addr-readonly').value = vo.address;
+  addrDisplay.style.display = 'block';
+  voActions.style.display = 'flex';
+  var btnComplete = document.getElementById('btn-complete-vo');
+  if (vo.status === 'completed') {
+    btnComplete.textContent = '✓ Completed';
+    btnComplete.classList.add('done');
+    btnComplete.disabled = true;
+  } else {
+    btnComplete.textContent = '✓ Mark Completed';
+    btnComplete.classList.remove('done');
+    btnComplete.disabled = false;
+  }
+
+  if (vo.status === 'completed') {
+    logInner.style.display = 'none';
+    noVoMsg.style.display  = 'block';
+    noVoMsg.textContent    = 'This Visit Order is completed. No new logs can be added.';
+  } else {
+    logInner.style.display = 'block';
+    noVoMsg.style.display  = 'none';
+    document.getElementById('vo-display').value      = vo.name;
+    document.getElementById('address-display').value = vo.address;
+    if (!document.getElementById('arrival').value) {
+      document.getElementById('arrival').value = toISO(new Date());
+    }
+  }
+  renderLogsTable();
+}
+
+function completeVO(id) {
+  var vo = visitOrders.find(function(v){ return v.id===id; });
+  if (!vo) return;
+  if (!confirm('Mark "'+vo.name+'" as Completed? You won\'t be able to add new logs to it.')) return;
+  vo.status = 'completed';
+  saveData();
+  renderVOSelect();
+  renderVOTable();
+  renderVOTabs();
+  if (activeVoId === id) selectVO(id);
+  showToast(vo.name+' marked as Completed','success');
+}
+
+function deleteVO(id) {
+  var vo = visitOrders.find(function(v){ return v.id===id; });
+  if (!vo) return;
+  var logCount = logs.filter(function(l){ return l.voId===id; }).length;
+  var msg = 'Delete Visit Order "'+vo.name+'"?';
+  if (logCount) msg += '\nThis will also delete '+logCount+' visit log'+(logCount>1?'s':'')+'.';
+  if (!confirm(msg)) return;
+  visitOrders = visitOrders.filter(function(v){ return v.id!==id; });
+  logs = logs.filter(function(l){ return l.voId!==id; });
+  saveData();
+  if (activeVoId === id) {
+    activeVoId = null;
+    document.getElementById('vo-select').value = '';
+    selectVO(null);
+  }
+  if (activeTab === id) { activeTab = 'all'; }
+  renderVOSelect();
+  renderVOTable();
+  renderVOTabs();
+  renderLogsTable();
+  showToast('Visit Order deleted');
+}
+
+// ═══════════════════════════════════════════
+//  DURATION
+// ═══════════════════════════════════════════
+function calcDuration() {
+  var a = document.getElementById('arrival').value;
+  var b = document.getElementById('departure').value;
+  var badge = document.getElementById('dur-badge');
+  if (!a||!b){ badge.style.display='none'; return ''; }
+  var diff = (new Date(b)-new Date(a))/60000;
+  if (diff<=0){ badge.style.display='none'; return ''; }
+  var h=Math.floor(diff/60), m=Math.round(diff%60);
+  var txt = h>0 ? (h+'h '+m+'m') : (m+' min');
+  document.getElementById('dur-text').textContent = txt;
+  badge.style.display = 'block';
+  return txt;
+}
+document.getElementById('arrival').addEventListener('change', calcDuration);
+document.getElementById('departure').addEventListener('change', calcDuration);
+
+// ═══════════════════════════════════════════
+//  LOG FORM SUBMIT (GOOGLE SHEETS INTEGRATED)
+// ═══════════════════════════════════════════
+document.getElementById('log-form').addEventListener('submit', function(e){
+  e.preventDefault();
+
+  var vo = visitOrders.find(function(v){ return v.id===activeVoId; });
+  if (!vo) { showToast('Please select a Visit Order first','error'); return; }
+
+  var arrivalVal   = document.getElementById('arrival').value;
+  var departureVal = document.getElementById('departure').value;
+  var visitTypeVal = document.getElementById('visit-type').value;
+  var notesVal     = document.getElementById('notes').value.trim();
+
+  var checked = [];
+  document.querySelectorAll('.activities-grid input[type=checkbox]:checked').forEach(function(cb){
+    checked.push(cb.value);
+  });
+
+  if (!arrivalVal)   { showToast('Please set the arrival time','error');   return; }
+  if (!departureVal) { showToast('Please set the departure time','error'); return; }
+  if (new Date(departureVal) <= new Date(arrivalVal)) {
+    showToast('Departure must be after arrival','error'); return;
+  }
+
+  var diffMin = (new Date(departureVal) - new Date(arrivalVal)) / 60000;
+  var dh = Math.floor(diffMin/60), dm = Math.round(diffMin%60);
+  var durationVal = dh > 0 ? (dh+'h '+dm+'m') : (dm+' min');
+
+  var log = {
+    id:         uid(),
+    voId:       vo.id,
+    voName:     vo.name,
+    address:    vo.address,
+    timestamp:  fmtTS(new Date()),
+    arrival:    arrivalVal.replace('T',' '),
+    departure:  departureVal.replace('T',' '),
+    duration:   durationVal,
+    visitType:  visitTypeVal,
+    activities: checked.join(', '),
+    notes:      notesVal
+  };
+
+  // Push to cloud Google script if URL config is available
+  if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+    showToast('Sending data to cloud...⏳', 'info');
+    
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      cache: "no-cache",
+      headers: { "Content-Type": "application/json" },
+      redirect: "follow",
+      body: JSON.stringify(log)
+    })
+    .then(function() {
+      showToast('Log uploaded directly to Google Sheets! 🎉', 'success');
+    })
+    .catch(function(err) {
+      console.error(err);
+      showToast('Cloud upload failed, fallback local sync saved.', 'error');
+    });
+  } else {
+    showToast('Saved locally. (Set Google Script URL for cloud saving)', 'info');
+  }
+
+  // Fallback / standard sync with local storage table views
+  logs.push(log);
+  saveData();
+  renderVOTable();
+  renderVOTabs();
+  renderLogsTable();
+
+  // Reset Form fields
+  document.getElementById('arrival').value   = toISO(new Date());
+  document.getElementById('departure').value = '';
+  document.getElementById('visit-type').value = '';
+  document.getElementById('notes').value = '';
+  document.querySelectorAll('.activities-grid input[type=checkbox]').forEach(function(cb){ cb.checked=false; });
+  document.getElementById('dur-badge').style.display = 'none';
+  document.getElementById('vo-display').value      = vo.name;
+  document.getElementById('address-display').value = vo.address;
+});
+
+// ═══════════════════════════════════════════
+//  LOGS TABLE
+// ═══════════════════════════════════════════
+function filteredLogs() {
+  if (activeTab==='all') return logs;
+  return logs.filter(function(l){ return l.voId===activeTab; });
+}
+
+function renderLogsTable() {
+  var fl = filteredLogs();
+  document.getElementById('cnt').textContent = fl.length;
+  var tbody = document.getElementById('tbody');
+  if (!fl.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="no-rec">No visit logs yet for this selection.</td></tr>';
+    return;
+  }
+  var html = '';
+  var reversed = fl.slice().reverse();
+  reversed.forEach(function(r, ri){
+    var realIdx = logs.indexOf(r); 
+    var acts = (r.activities||'').split(',').filter(Boolean).map(function(a){
+      return '<span class="badge">'+esc(a.trim())+'</span>';
+    }).join('');
+    html += '<tr>';
+    html += '<td style="color:var(--muted);font-size:.77rem">'+(fl.length-ri)+'</td>';
+    html += '<td><div class="cn">'+esc(r.voName)+'</div></td>';
+    html += '<td style="font-size:.79rem;color:var(--muted)">'+esc(r.address)+'</td>';
+    html += '<td style="white-space:nowrap;font-size:.82rem">'+esc(r.arrival)+'</td>';
+    html += '<td style="white-space:nowrap;font-size:.82rem">'+esc(r.departure)+'</td>';
+    html += '<td style="white-space:nowrap;font-weight:600">'+esc(r.duration||'—')+'</td>';
+    html += '<td><span class="badge" style="background:rgba(74,124,89,.12);color:#2f6644">'+esc(r.visitType||'—')+'</span></td>';
+    html += '<td>'+(acts||'<span style="color:var(--muted)">—</span>')+'</td>';
+    html += '<td style="font-size:.79rem;color:var(--muted);max-width:140px">'+esc(r.notes||'—')+'</td>';
+    html += '<td><button data-logidx="'+realIdx+'" class="btn-vo btn-delete-vo log-delete" style="padding:4px 8px;font-size:.72rem">&#128465; Delete</button></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+
+  document.querySelectorAll('.log-delete').forEach(function(btn){
+    btn.addEventListener('click', function(){ deleteLog(this.getAttribute('data-logidx')); });
+  });
+}
+
+function deleteLog(idx) {
+  if (!confirm('Delete this visit log entry permanently?')) return;
+  logs.splice(idx, 1);
+  saveData();
+  renderVOTable();
+  renderVOTabs();
+  renderLogsTable();
+  showToast('Visit log entry deleted');
+}
+
+// ═══════════════════════════════════════════
+//  CSV EXPORT UTILS
+// ═══════════════════════════════════════════
+function downloadCSV(csv, filename) {
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement("a");
+  if (link.download !== undefined) {
+    var url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+function generateCSV(arr) {
+  var headers = ['Timestamp','Visit Order','Address','Arrival','Departure','Duration','Visit Type','Activities','Notes'];
+  var rows = [headers.join(',')];
+  arr.forEach(function(l){
+    var row = [
+      '"'+(l.timestamp||'').replace(/"/g, '""')+'"',
+      '"'+(l.voName||'').replace(/"/g, '""')+'"',
+      '"'+(l.address||'').replace(/"/g, '""')+'"',
+      '"'+(l.arrival||'').replace(/"/g, '""')+'"',
+      '"'+(l.departure||'').replace(/"/g, '""')+'"',
+      '"'+(l.duration||'').replace(/"/g, '""')+'"',
+      '"'+(l.visitType||'').replace(/"/g, '""')+'"',
+      '"'+(l.activities||'').replace(/"/g, '""')+'"',
+      '"'+(l.notes||'').replace(/"/g, '""')+'"'
+    ];
+    rows.push(row.join(','));
+  });
+  return rows.join('\n');
+}
+
+document.getElementById('btn-csv').addEventListener('click', function(){
+  var fl = filteredLogs();
+  if(!fl.length) { showToast('No data to export','error'); return; }
+  var name = activeTab === 'all' ? 'all_orders' : (visitOrders.find(function(v){return v.id===activeTab;})||{name:'order'}).name;
+  var csv = generateCSV(fl);
+  downloadCSV(csv, 'sugarplum_'+name.toLowerCase().replace(/[^a-z0-0]/g,'_')+'_export.csv');
+});
+
+document.getElementById('btn-csv-all').addEventListener('click', function(){
+  if(!logs.length) { showToast('No data to export','error'); return; }
+  var csv = generateCSV(logs);
+  downloadCSV(csv, 'sugarplum_all_orders_master_export.csv');
+});
+
+document.getElementById('btn-clr').addEventListener('click', function(){
+  if(!logs.length && !visitOrders.length) return;
+  if(!confirm('DANGER! Wipe out ALL logs and Visit Orders from local view? (Cloud entries are unaffected)')) return;
+  localStorage.clear();
+  visitOrders = []; logs = []; activeVoId = null; activeTab = 'all';
+  saveData();
+  renderVOSelect(); selectVO(null); renderVOTable(); renderVOTabs(); renderLogsTable();
+  showToast('All local views cleared');
+});
+
+// ═══════════════════════════════════════════
+//  INITIALIZE
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', function(){
+  loadData();
+  renderVOSelect();
+  renderVOTable();
+  renderVOTabs();
+  renderLogsTable();
+});
+</script>
+</body>
+</html>
